@@ -13,4 +13,4 @@ const Hospitals = mongoose.Schema({
   toJSON: { getters: true },
 });
 
-module.exports=mongoose.model("Premium hospitals",Hospitals)
+module.exports=mongoose.model("Premium-hospital",Hospitals)

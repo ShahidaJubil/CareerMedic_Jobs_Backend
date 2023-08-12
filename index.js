@@ -8,12 +8,19 @@ const verifyJWT = require("./middleware/verifyJWT")
 const JWT = require("./controller/jwt")
 require("dotenv").config();
 const session = require("express-session");
+const bodyParser = require("body-parser");
 
 const MongoDBStore = require("connect-mongodb-session")(session);
 
 
+// Set a larger payload size limit
+app.use(bodyParser.json({ limit: "100mb" })); // Set the limit based on your requirements
+app.use(bodyParser.urlencoded({ limit: "100mb", extended: true })); // Set the limit based on your requirements
+
+
+
 const morgan = require("morgan");
-const bodyParser = require("body-parser");
+//const bodyParser = require("body-parser");
 app.use(morgan("dev"));
 const cookieParser = require("cookie-parser");
 
@@ -28,7 +35,7 @@ app.use(cookieParser());
 app.use((req, res, next) => {
     res.setHeader(
         "Access-Control-Allow-Origin",
-        "*"
+        "http://localhost:3000"
     );
     res.setHeader("Access-Control-Allow-Credentials", true);
     res.setHeader("Access-Control-Allow-Methods", [

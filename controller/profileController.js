@@ -1,6 +1,8 @@
 const uploadProfile = require("../model/model");
 const multer = require("multer");
 const express = require("express");
+
+const path = require('path');
 const app = express();
 app.use("/uploads", express.static("uploads"));
 
@@ -154,6 +156,87 @@ const getUserProfile = async (req, res) => {
   }
 };
 
+
+
+const uploadResume = async (request, response) => {
+  const userId = request.params.userId; // Assuming you get the userId from the request parameters
+  const fileObj = {
+    path: request.file.path.replace(/\\/g, '/'), // Replace all backslashes with forward slashes
+    filename: request.file.originalname,
+  };
+
+  try {
+    const file = await uploadProfile.create(fileObj);
+    // Find the existing user by their ID
+    const user = await uploadProfile.findById(userId);
+
+    if (!user) {
+      return response.status(404).json({ error: 'User not found' });
+    }
+
+    // Update the user's 'resume' field with the uploaded file information
+    user.resume = {
+      path: fileObj.path,
+      filename: fileObj.filename,
+      downloadCount: 0, // Initialize download count
+    };
+    await user.save();
+
+    response
+      .status(200)
+      .json({ path: `http://localhost:${process.env.PORT}/file/${fileObj.filename}` });
+  } catch (error) {
+    console.error(error.message);
+    response.status(500).json({ error: error.message });
+  }
+}
+
+// const getResume=async (req, res) => {
+//   const userId = req.params.userId;
+
+//   try {
+//     // Find the existing user by their ID
+//     const user = await uploadProfile.findById(userId);
+
+//     if (!user) {
+//       return res.status(404).json({ error: 'User not found' });
+//     }
+
+//     // Retrieve the user's resume information
+//     const resumeInfo = user.resume;
+
+//     res.status(200).json(resumeInfo);
+//   } catch (error) {
+//     console.error(error.message);
+//     res.status(500).json({ error: error.message });
+//   }
+// }
+const getResume = async (request, response) => {
+  const userId = request.params.userId; // Assuming you get the userId from the request parameters
+
+  try {
+    // Find the user by their ID
+    const user = await uploadProfile.findById(userId);
+
+    if (!user || !user.resume) {
+      return response.status(404).json({ error: 'Resume not found' });
+    }
+
+    const resume = user.resume;
+
+    // Update the download count
+    resume.downloadCount++;
+    await user.save();
+
+    // Send the resume file for download
+    response.download(resume.path, resume.filename);
+  } catch (error) {
+    console.error(error.message);
+    response.status(500).json({ error: error.message });
+  }
+};
+
+
 module.exports = {
   postProfile,
   getProfilesFromForm,
@@ -161,5 +244,7 @@ module.exports = {
   geteachProfile,
   getProfile,
   getUserProfile,
-  searchProfiles
+  searchProfiles,
+  uploadResume,
+  getResume
 };
